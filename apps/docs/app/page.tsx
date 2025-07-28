@@ -7,8 +7,12 @@ export default function Page() {
   const ref = useRef<HTMLCanvasElement>(null)
   
   const shapes: any = []
+
   const color = useRef<string>("blue")
   const [ C, setC ] = useState<string>("blue")
+
+  const cursor = useRef<string>("default")
+  const [cursorState, setCursorState] = useState<string>("R")
 
   function DrawRect() {
     
@@ -36,6 +40,7 @@ export default function Page() {
 
     let isDragging = false
     let rectX = 0, rectY = 0
+  
 
 
     const mouseDown = (e) => {
@@ -97,6 +102,19 @@ export default function Page() {
           color.current = 'green'
           setC("green")
         }}></button>
+      </div>
+
+      <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg">
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'A' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'A'
+          setCursorState("A")
+        
+        }}>A</button>
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'R' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'R'
+          setCursorState("R")
+        }}>R</button>
+      
       </div>
     </div>
     
