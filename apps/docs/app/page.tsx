@@ -36,6 +36,50 @@ export default function Page() {
 
   }
 
+  function isPointNearLine(x1: number, y1: number, x2: number, y2: number, px: number, py: number): boolean {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    const tolerance = 5
+
+    const dot = A * C + B * D;
+    const len_sq = C * C + D * D;
+    let param = -1;
+
+    if (len_sq !== 0) param = dot / len_sq;
+
+    let nearestX, nearestY;
+
+    if (param < 0) {
+      nearestX = x1;
+      nearestY = y1;
+    } else if (param > 1) {
+      nearestX = x2;
+      nearestY = y2;
+    } else {
+      nearestX = x1 + param * C;
+      nearestY = y1 + param * D;
+    }
+
+    const dx = px - nearestX;
+    const dy = py - nearestY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    return distance <= tolerance;
+  }
+
+
+  function onLine(e): number {
+    const x = e.clientX, y = e.clientY
+    let idx = -1
+    shapes.current.forEach((obj, index) => {
+      if(isPointNearLine(obj.startX, obj.startY, obj.endX, obj.endY, x, y)) {
+        idx = index
+      }
+    })
+    return idx
+  }
 
   function onRectangle(e: MouseEvent): number {
     const tolerance = 3;
@@ -80,7 +124,7 @@ export default function Page() {
     let dx = 0, dy = 0
 
     let lineX = 0, lineY = 0, lineIdx = -1
-
+    let dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0
 
     let animationFrameId: number;
 
@@ -109,6 +153,16 @@ export default function Page() {
             dy = rect.y - e.clientY
           }
         } 
+        if(lineIdx !== -1) {
+          const line = shapes.current[lineIdx]
+          if(line) {
+            dx1 = line.startX - e.clientX
+            dy1 = line.startY - e.clientY
+
+            dx2 = line.endX - e.clientX
+            dy2 = line.endY - e.clientY
+          }
+        }
       }
     }
 
@@ -129,15 +183,31 @@ export default function Page() {
         DrawRect()
         
         if(isDragging) {
-          const rect = shapes.current[rectIdx]
-          if(rect) {
-            rect.x = dx + e.clientX
-            rect.y = dy + e.clientY
-            DrawRect()
+          if(rectIdx !== -1) {
+            const rect = shapes.current[rectIdx]
+            if(rect) {
+              rect.x = dx + e.clientX
+              rect.y = dy + e.clientY
+              DrawRect()
+            }
+          }
+          else if(lineIdx !== -1) {
+            const line = shapes.current[lineIdx]
+            if(line) {
+              line.startX = dx1 + e.clientX
+              line.startY = dy1 + e.clientY
+
+              line.endX = dx2 + e.clientX
+              line.endY = dy2 + e.clientY
+              DrawRect()
+            }
           }
         }
         else {
           if((rectIdx = onRectangle(e)) !== -1) {
+            document.body.style.cursor = "all-scroll"
+          }
+          else if((lineIdx = onLine(e)) !== -1) {
             document.body.style.cursor = "all-scroll"
           }
           else
@@ -153,33 +223,36 @@ export default function Page() {
     }
 
     const mouseUp = (e) => {
-      isDragging = false
-      if(cursor.current === 'R') {
+      if(isDragging) {
+
+        if(cursor.current === 'R') {
+            shapes.current.push({
+            type: "rect",
+            x: rectX,
+            y: rectY,
+            width: e.clientX - rectX,
+            height: e.clientY - rectY,
+            color: color.current
+          })
+          DrawRect()
+        }
+        else if(cursor.current === 'A') {
+          rectIdx = -1
+        }
+        else if(cursor.current === 'L') {
+          console.log("hua")
           shapes.current.push({
-          type: "rect",
-          x: rectX,
-          y: rectY,
-          width: e.clientX - rectX,
-          height: e.clientY - rectY,
-          color: color.current
-        })
-        DrawRect()
+            type: "line",
+            startX: lineX,
+            startY: lineY,
+            endX: e.clientX,
+            endY: e.clientY,
+            color: color.current
+          })
+          DrawRect()
+        }
       }
-      else if(cursor.current === 'A') {
-        rectIdx = -1
-      }
-      else if(cursor.current === 'L') {
-        console.log("hua")
-        shapes.current.push({
-          type: "line",
-          startX: lineX,
-          startY: lineY,
-          endX: e.clientX,
-          endY: e.clientY,
-          color: color.current
-        })
-        DrawRect()
-      }
+      isDragging = false
     }
 
 
