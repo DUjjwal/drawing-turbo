@@ -6,7 +6,7 @@ export default function Page() {
 
   const ref = useRef<HTMLCanvasElement>(null)
   
-  const shapes: any = []
+  const shapes = useRef<any[]>([])
 
   const color = useRef<string>("blue")
   const [ C, setC ] = useState<string>("blue")
@@ -20,7 +20,7 @@ export default function Page() {
     const ctx = canvas?.getContext("2d")
     if(!ctx || !canvas)return;
     
-    shapes.forEach((obj: any) => {
+    shapes.current.forEach((obj: any) => {
       if(obj.type === 'rect') {
         ctx.strokeStyle = obj.color
         ctx.strokeRect(obj.x, obj.y, obj.width, obj.height)
@@ -28,6 +28,36 @@ export default function Page() {
     })
 
   }
+
+
+  function onRectangle(e: MouseEvent): number {
+    const tolerance = 3;
+    const x = e.clientX;
+    const y = e.clientY;
+
+    let idx = -1;
+
+    shapes.current.forEach((obj, index) => {
+      if (obj.type !== 'rect') return;
+
+      const left = obj.x;
+      const right = obj.x + obj.width;
+      const top = obj.y;
+      const bottom = obj.y + obj.height;
+
+      const onLeft = Math.abs(x - left) <= tolerance && y >= top && y <= bottom;
+      const onRight = Math.abs(x - right) <= tolerance && y >= top && y <= bottom;
+      const onTop = Math.abs(y - top) <= tolerance && x >= left && x <= right;
+      const onBottom = Math.abs(y - bottom) <= tolerance && x >= left && x <= right;
+
+      if (onLeft || onRight || onTop || onBottom) {
+        idx = index;
+      }
+    });
+
+    return idx; 
+  }
+
 
 
 
@@ -39,14 +69,23 @@ export default function Page() {
     canvas.height = window.innerHeight - 10
 
     let isDragging = false
-    let rectX = 0, rectY = 0
-  
+    let rectX = 0, rectY = 0, rectIdx = -1
+    let dx = 0, dy = 0
 
 
     const mouseDown = (e) => {
       isDragging = true
       rectX = e.clientX
       rectY = e.clientY
+      if(cursor.current === 'A') {
+        if(rectIdx !== -1) {
+          const rect = shapes.current[rectIdx]
+          if(rect) {
+            dx = rect.x - e.clientX
+            dy = rect.y - e.clientY
+          }
+        } 
+      }
     }
 
     const mouseMove = (e) => {
@@ -56,13 +95,34 @@ export default function Page() {
         ctx.strokeStyle = color.current
         ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
       }
+      else if(cursor.current === 'A') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        DrawRect()
+        
+        if(isDragging) {
+          const rect = shapes.current[rectIdx]
+          if(rect) {
+            rect.x = dx + e.clientX
+            rect.y = dy + e.clientY
+            DrawRect()
+          }
+        }
+        else {
+          if((rectIdx = onRectangle(e)) !== -1) {
+            document.body.style.cursor = "all-scroll"
+          }
+          else
+            document.body.style.cursor = "default"
+        }
+        
+      }
         
     }
 
     const mouseUp = (e) => {
       isDragging = false
       if(cursor.current === 'R') {
-          shapes.push({
+          shapes.current.push({
           type: "rect",
           x: rectX,
           y: rectY,
@@ -72,6 +132,9 @@ export default function Page() {
         })
         DrawRect()
       
+      }
+      else if(cursor.current === 'A') {
+        rectIdx = -1
       }
     }
 
