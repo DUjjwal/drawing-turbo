@@ -25,6 +25,13 @@ export default function Page() {
         ctx.strokeStyle = obj.color
         ctx.strokeRect(obj.x, obj.y, obj.width, obj.height)
       }
+      else if(obj.type === 'line') {
+        ctx.beginPath()
+        ctx.moveTo(obj.startX, obj.startY)
+        ctx.strokeStyle = obj.color
+        ctx.lineTo(obj.endX, obj.endY)
+        ctx.stroke()
+      }
     })
 
   }
@@ -75,6 +82,19 @@ export default function Page() {
     let lineX = 0, lineY = 0, lineIdx = -1
 
 
+    let animationFrameId: number;
+
+    const drawLineFrame = (e: MouseEvent) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      DrawRect()
+
+      ctx.beginPath()
+      ctx.strokeStyle = color.current
+      ctx.moveTo(lineX, lineY)
+      ctx.lineTo(e.clientX, e.clientY)
+      ctx.stroke()
+    };
+    
     const mouseDown = (e) => {
       isDragging = true
       rectX = e.clientX
@@ -92,14 +112,19 @@ export default function Page() {
       }
     }
 
+    const drawRectFrame = (e) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      DrawRect()
+      ctx.strokeStyle = color.current
+      ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
+    }
+
     const mouseMove = (e) => {
-      if(isDragging && cursor.current === 'R') {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        DrawRect()
-        ctx.strokeStyle = color.current
-        ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
+      if(isDragging && cursor.current === 'R') {        
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => drawRectFrame(e));
       }
-      else if(cursor.current === 'A') {
+      if(cursor.current === 'A') {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         DrawRect()
         
@@ -120,14 +145,10 @@ export default function Page() {
         }
         
       }
-      else if(isDragging && cursor.current === 'L') {
-        ctx.beginPath()
-        ctx.strokeStyle = color.current
-        ctx.moveTo(lineX, lineY)
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        DrawRect()
-        ctx.lineTo(e.clientX, e.clientY)
-        ctx.stroke()
+      if(isDragging && cursor.current === 'L') {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(() => drawLineFrame(e));
+      
       }        
     }
 
@@ -143,10 +164,21 @@ export default function Page() {
           color: color.current
         })
         DrawRect()
-      
       }
       else if(cursor.current === 'A') {
         rectIdx = -1
+      }
+      else if(cursor.current === 'L') {
+        console.log("hua")
+        shapes.current.push({
+          type: "line",
+          startX: lineX,
+          startY: lineY,
+          endX: e.clientX,
+          endY: e.clientY,
+          color: color.current
+        })
+        DrawRect()
       }
     }
 
@@ -160,6 +192,7 @@ export default function Page() {
       canvas.removeEventListener("mousedown", mouseDown)
       canvas.removeEventListener("mouseup", mouseUp)
       canvas.removeEventListener("mousemove", mouseMove)
+      cancelAnimationFrame(animationFrameId); 
     }
 
   }, [])
