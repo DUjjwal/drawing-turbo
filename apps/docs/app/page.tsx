@@ -11,7 +11,7 @@ export default function Page() {
   const color = useRef<string>("blue")
   const [ C, setC ] = useState<string>("blue")
 
-  const cursor = useRef<string>("default")
+  const cursor = useRef<string>("R")
   const [cursorState, setCursorState] = useState<string>("R")
 
   function DrawRect() {
@@ -50,7 +50,7 @@ export default function Page() {
     }
 
     const mouseMove = (e) => {
-      if(isDragging) {
+      if(isDragging && cursor.current === 'R') {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         DrawRect()
         ctx.strokeStyle = color.current
@@ -61,15 +61,18 @@ export default function Page() {
 
     const mouseUp = (e) => {
       isDragging = false
-      shapes.push({
-        type: "rect",
-        x: rectX,
-        y: rectY,
-        width: e.clientX - rectX,
-        height: e.clientY - rectY,
-        color: color.current
-      })
-      DrawRect()
+      if(cursor.current === 'R') {
+          shapes.push({
+          type: "rect",
+          x: rectX,
+          y: rectY,
+          width: e.clientX - rectX,
+          height: e.clientY - rectY,
+          color: color.current
+        })
+        DrawRect()
+      
+      }
     }
 
 
