@@ -72,11 +72,15 @@ export default function Page() {
     let rectX = 0, rectY = 0, rectIdx = -1
     let dx = 0, dy = 0
 
+    let lineX = 0, lineY = 0, lineIdx = -1
+
 
     const mouseDown = (e) => {
       isDragging = true
       rectX = e.clientX
       rectY = e.clientY
+      lineX = e.clientX
+      lineY = e.clientY
       if(cursor.current === 'A') {
         if(rectIdx !== -1) {
           const rect = shapes.current[rectIdx]
@@ -116,7 +120,15 @@ export default function Page() {
         }
         
       }
-        
+      else if(isDragging && cursor.current === 'L') {
+        ctx.beginPath()
+        ctx.strokeStyle = color.current
+        ctx.moveTo(lineX, lineY)
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        DrawRect()
+        ctx.lineTo(e.clientX, e.clientY)
+        ctx.stroke()
+      }        
     }
 
     const mouseUp = (e) => {
@@ -180,6 +192,11 @@ export default function Page() {
           cursor.current = 'R'
           setCursorState("R")
         }}>R</button>
+
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'L' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'L'
+          setCursorState("L")
+        }}>L</button>
       
       </div>
     </div>
