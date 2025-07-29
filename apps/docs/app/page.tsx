@@ -43,6 +43,13 @@ export default function Page() {
     const D = y2 - y1;
     const tolerance = 5
 
+    const rect = ref.current?.getBoundingClientRect()
+
+    
+    px = px - (rect?.left ?? 0);
+    py = py - (rect?.top ?? 0);
+
+
     const dot = A * C + B * D;
     const len_sq = C * C + D * D;
     let param = -1;
@@ -83,8 +90,12 @@ export default function Page() {
 
   function onRectangle(e: MouseEvent): number {
     const tolerance = 3;
-    const x = e.clientX;
-    const y = e.clientY;
+
+    const rect = ref.current?.getBoundingClientRect()
+
+    
+    const x = e.clientX - (rect?.left ?? 0);
+    const y = e.clientY - (rect?.top ?? 0);
 
     let idx = -1;
 
