@@ -126,6 +126,8 @@ export default function Page() {
     let lineX = 0, lineY = 0, lineIdx = -1
     let dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0
 
+    let selectedIdx = -1
+
     let animationFrameId: number;
 
     const drawLineFrame = (e: MouseEvent) => {
@@ -208,8 +210,9 @@ export default function Page() {
           if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1) {
             document.body.style.cursor = "all-scroll"
           }
-          else
+          else 
             document.body.style.cursor = "default"
+          
 
           console.log(lineIdx, rectIdx)
         }
@@ -237,6 +240,10 @@ export default function Page() {
           DrawRect()
         }
         else if(cursor.current === 'A') {
+          if(rectIdx !== -1)
+              selectedIdx = rectIdx
+            else
+              selectedIdx = lineIdx
           rectIdx = -1
           lineIdx = -1
         }
@@ -263,11 +270,12 @@ export default function Page() {
     canvas.addEventListener("mouseup", mouseUp)
     window.addEventListener("keydown", (e) => {
       if(e.key === 'Delete' && cursor.current === 'A') {
-        if((lineIdx !== -1) || (rectIdx !== -1)) {
-          const updated = shapes.current.filter((_, index) => index !== lineIdx && index !== rectIdx)
+        if(selectedIdx !== -1) {
+          const updated = shapes.current.filter((obj, index) => index !== selectedIdx)
           shapes.current = updated
           ctx.clearRect(0, 0, canvas.width, canvas.height)
           DrawRect()
+          selectedIdx = -1
         }
       }
     })
