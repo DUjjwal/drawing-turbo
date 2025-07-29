@@ -19,7 +19,7 @@ export default function Page() {
     const canvas = ref.current
     const ctx = canvas?.getContext("2d")
     if(!ctx || !canvas)return;
-    
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     shapes.current.forEach((obj: any) => {
       if(obj.type === 'rect') {
         ctx.strokeStyle = obj.color
@@ -204,14 +204,14 @@ export default function Page() {
           }
         }
         else {
-          if((rectIdx = onRectangle(e)) !== -1) {
-            document.body.style.cursor = "all-scroll"
-          }
-          else if((lineIdx = onLine(e)) !== -1) {
+          
+          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1) {
             document.body.style.cursor = "all-scroll"
           }
           else
             document.body.style.cursor = "default"
+
+          console.log(lineIdx, rectIdx)
         }
         
       }
@@ -238,6 +238,7 @@ export default function Page() {
         }
         else if(cursor.current === 'A') {
           rectIdx = -1
+          lineIdx = -1
         }
         else if(cursor.current === 'L') {
           console.log("hua")
@@ -260,6 +261,16 @@ export default function Page() {
     canvas.addEventListener("mousedown", mouseDown)
     canvas.addEventListener("mousemove", mouseMove)
     canvas.addEventListener("mouseup", mouseUp)
+    window.addEventListener("keydown", (e) => {
+      if(e.key === 'Delete' && cursor.current === 'A') {
+        if((lineIdx !== -1) || (rectIdx !== -1)) {
+          const updated = shapes.current.filter((_, index) => index !== lineIdx && index !== rectIdx)
+          shapes.current = updated
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+          DrawRect()
+        }
+      }
+    })
 
     return () => {
       canvas.removeEventListener("mousedown", mouseDown)
