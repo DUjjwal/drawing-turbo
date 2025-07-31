@@ -32,6 +32,12 @@ export default function Page() {
         ctx.lineTo(obj.endX, obj.endY)
         ctx.stroke()
       }
+      else if(obj.type === 'circle') {
+        ctx.beginPath()
+        ctx.strokeStyle = obj.color
+        ctx.arc(obj.x, obj.y, obj.r, 0, 2*Math.PI)
+        ctx.stroke()
+      }
     })
 
   }
@@ -139,6 +145,8 @@ export default function Page() {
 
     let selectedIdx = -1
 
+    let circleX = 0, circleY = 0
+
     let animationFrameId: number;
 
     const drawLineFrame = (e: MouseEvent) => {
@@ -158,6 +166,8 @@ export default function Page() {
       rectY = e.clientY
       lineX = e.clientX
       lineY = e.clientY
+      circleX = e.clientX
+      circleY = e.clientY
       if(cursor.current === 'A') {
         if(rectIdx !== -1) {
           const rect = shapes.current[rectIdx]
@@ -190,6 +200,23 @@ export default function Page() {
       if(isDragging && cursor.current === 'R') {        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => drawRectFrame(e));
+      }
+      if(isDragging && cursor.current === 'C') {
+        let mx = ( e.clientX + circleX ) / 2
+        let my = ( e.clientY + circleY ) / 2
+
+        // console.log(circleX+" "+circleY)
+        console.log(mx+" "+my)
+
+        let dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
+        let r = Math.sqrt(dist)
+    
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        DrawRect()
+        ctx.beginPath()
+        ctx.strokeStyle = color.current
+        ctx.arc(mx, my, r, 0, 2*Math.PI)
+        ctx.stroke()
       }
       if(cursor.current === 'A') {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -270,6 +297,22 @@ export default function Page() {
           })
           DrawRect()
         }
+        else if(cursor.current === 'C') {
+          let mx = ( e.clientX + circleX ) / 2
+          let my = ( e.clientY + circleY ) / 2
+
+
+          let dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
+          let r = Math.sqrt(dist)
+          shapes.current.push({
+            type: "circle",
+            x: mx,
+            y: my,
+            r,
+            color: color.current
+          })
+          DrawRect()
+        }
       }
       isDragging = false
     }
@@ -333,6 +376,11 @@ export default function Page() {
           cursor.current = 'L'
           setCursorState("L")
         }}>L</button>
+
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'C' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'C'
+          setCursorState("C")
+        }}>C</button>
       
       </div>
     </div>
