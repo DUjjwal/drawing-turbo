@@ -38,9 +38,47 @@ export default function Page() {
         ctx.arc(obj.x, obj.y, obj.r, 0, 2*Math.PI)
         ctx.stroke()
       }
+      else if(obj.type === 'path') {
+        
+        for(let i = 1; i<obj.points.length; i++) {
+          ctx.beginPath()
+          ctx.moveTo(obj.points[i-1].x, obj.points[i-1].y)
+          ctx.lineTo(obj.points[i].x, obj.points[i].y)
+          ctx.strokeStyle = obj.color
+          ctx.stroke()
+        }
+      }
     })
 
   }
+
+
+  function OnPath(e): number {
+    let idx = -1
+    const rect = ref.current?.getBoundingClientRect()
+    const px = e.clientX - (rect?.left ?? 0)
+    const py = e.clientY - (rect?.top ?? 0)
+
+    shapes.current.forEach((obj, index) => {
+      if (obj.type === 'path') {
+        const pts = obj.points
+        for (let i = 1; i < pts.length; i++) {
+          const x1 = pts[i - 1].x
+          const y1 = pts[i - 1].y
+          const x2 = pts[i].x
+          const y2 = pts[i].y
+
+          if (isPointNearLine(x1, y1, x2, y2, px + (rect?.left ?? 0), py + (rect?.top ?? 0))) {
+            idx = index
+          }
+        }
+      }
+    })
+
+    return idx
+  }
+
+
 
   function isPointNearLine(x1: number, y1: number, x2: number, y2: number, px: number, py: number): boolean {
     const A = px - x1;
@@ -97,10 +135,17 @@ export default function Page() {
   function onCircle(e: any): number {
     let idx = -1
     let flag = false
+
+    const rect = ref.current?.getBoundingClientRect()
+
+    
+    const x = e.clientX - (rect?.left ?? 0);
+    const y = e.clientY - (rect?.top ?? 0);
+
     shapes.current.forEach((obj, index) => {
       if(obj.type === 'circle') {
-        let dx = obj.x - e.clientX
-        let dy = obj.y - e.clientY
+        let dx = obj.x - x
+        let dy = obj.y - y
   
         let d = Math.sqrt(dx*dx + dy*dy)
         
@@ -169,6 +214,10 @@ export default function Page() {
     let circleX = 0, circleY = 0, circleIdx = -1
     let dxc = 0 , dyc = 0
 
+    let pointX = 0, pointY = 0, pointIdx = -1
+    let points = []
+    let dp = []
+
     let animationFrameId: number;
 
     const drawLineFrame = (e: MouseEvent) => {
@@ -190,6 +239,8 @@ export default function Page() {
       lineY = e.clientY
       circleX = e.clientX
       circleY = e.clientY
+      pointX = e.clientX
+      pointY = e.clientY
       if(cursor.current === 'A') {
         if(rectIdx !== -1) {
           const rect = shapes.current[rectIdx]
@@ -215,8 +266,20 @@ export default function Page() {
             dyc = circle.y - e.clientY
           }
         }
+        if(pointIdx !== -1) {
+          const point = shapes.current[pointIdx].points
+          if(point) {
+            dp = []
+            for(let i = 0; i < point.length; i++) {
+              dp.push({
+                dx: point[i].x - e.clientX,
+                dy: point[i].y - e.clientY
+              })
+            }
+        }
       }
     }
+  }
 
     const drawRectFrame = (e) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -226,9 +289,24 @@ export default function Page() {
     }
 
     const mouseMove = (e) => {
+      
       if(isDragging && cursor.current === 'R') {        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => drawRectFrame(e));
+      }
+      if(isDragging && cursor.current === 'P') {
+        points.push({
+          x: pointX,
+          y: pointY
+        })
+        let x = e.clientX, y = e.clientY
+        ctx.beginPath()
+        ctx.moveTo(pointX, pointY)
+        ctx.lineTo(x, y)
+        ctx.strokeStyle = color.current
+        ctx.stroke()
+        pointX = x
+        pointY = y
       }
       if(isDragging && cursor.current === 'C') {
         let mx = ( e.clientX + circleX ) / 2
@@ -280,10 +358,20 @@ export default function Page() {
               DrawRect()
             }
           }
+          else if(pointIdx !== -1) {
+            const point = shapes.current[pointIdx].points
+            if(point) {
+              for(let i = 0; i < point.length; i++) {
+                point[i].x = dp[i].dx + e.clientX
+                point[i].y = dp[i].dy + e.clientY
+              }
+            }
+            DrawRect()
+          }
         }
         else {
           
-          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1 || (circleIdx = onCircle(e)) !== -1 ) {
+          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1 || (circleIdx = onCircle(e)) !== -1 || (pointIdx = OnPath(e)) !== -1) {
             document.body.style.cursor = "all-scroll"
           }
           else 
@@ -318,13 +406,16 @@ export default function Page() {
         else if(cursor.current === 'A') {
           if(rectIdx !== -1)
               selectedIdx = rectIdx
-            else if(lineIdx !== -1)
-              selectedIdx = lineIdx
-            else
-              selectedIdx = circleIdx
+          else if(lineIdx !== -1)
+            selectedIdx = lineIdx
+          else if(circleIdx !== -1)
+            selectedIdx = circleIdx 
+          else
+            selectedIdx = pointIdx
           rectIdx = -1
           lineIdx = -1
           circleIdx = -1
+          pointIdx = -1
         }
         else if(cursor.current === 'L') {
           console.log("hua")
@@ -354,6 +445,20 @@ export default function Page() {
           })
           DrawRect()
         }
+        else if(cursor.current === 'P') {
+          if(points.length > 0) {
+            shapes.current.push({
+              type: "path",
+              points: points,
+              color: color.current
+            })
+            points = []
+            dp = []
+            DrawRect()
+
+          }
+        }
+
       }
       isDragging = false
     }
@@ -422,10 +527,15 @@ export default function Page() {
           cursor.current = 'C'
           setCursorState("C")
         }}>C</button>
+
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'P' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'P'
+          setCursorState("P")
+        }}>P</button>
       
       </div>
     </div>
     
   
-  );
+  )
 }
