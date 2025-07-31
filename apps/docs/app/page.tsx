@@ -94,6 +94,27 @@ export default function Page() {
     return idx
   }
 
+  function onCircle(e: any): number {
+    let idx = -1
+    let flag = false
+    shapes.current.forEach((obj, index) => {
+      if(obj.type === 'circle') {
+        let dx = obj.x - e.clientX
+        let dy = obj.y - e.clientY
+  
+        let d = Math.sqrt(dx*dx + dy*dy)
+        
+        if((d >= obj.r - 5) && (d <= obj.r + 5)) {
+          idx = index
+        }
+
+      }
+    })
+    return idx
+  }
+
+
+
   function onRectangle(e: MouseEvent): number {
     const tolerance = 3;
 
@@ -145,7 +166,8 @@ export default function Page() {
 
     let selectedIdx = -1
 
-    let circleX = 0, circleY = 0
+    let circleX = 0, circleY = 0, circleIdx = -1
+    let dxc = 0 , dyc = 0
 
     let animationFrameId: number;
 
@@ -186,6 +208,13 @@ export default function Page() {
             dy2 = line.endY - e.clientY
           }
         }
+        if(circleIdx !== -1) {
+          const circle = shapes.current[circleIdx]
+          if(circle) {
+            dxc = circle.x - e.clientX
+            dyc = circle.y - e.clientY
+          }
+        }
       }
     }
 
@@ -206,7 +235,7 @@ export default function Page() {
         let my = ( e.clientY + circleY ) / 2
 
         // console.log(circleX+" "+circleY)
-        console.log(mx+" "+my)
+        // console.log(mx+" "+my)
 
         let dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
         let r = Math.sqrt(dist)
@@ -242,17 +271,26 @@ export default function Page() {
               DrawRect()
             }
           }
+          else if(circleIdx !== -1) {
+            const circle = shapes.current[circleIdx]
+            if(circle) {
+              circle.x = dxc + e.clientX
+              circle.y = dyc + e.clientY
+
+              DrawRect()
+            }
+          }
         }
         else {
           
-          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1) {
+          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1 || (circleIdx = onCircle(e)) !== -1 ) {
             document.body.style.cursor = "all-scroll"
           }
           else 
             document.body.style.cursor = "default"
           
 
-          console.log(lineIdx, rectIdx)
+          // console.log(lineIdx, rectIdx)
         }
         
       }
@@ -280,10 +318,13 @@ export default function Page() {
         else if(cursor.current === 'A') {
           if(rectIdx !== -1)
               selectedIdx = rectIdx
-            else
+            else if(lineIdx !== -1)
               selectedIdx = lineIdx
+            else
+              selectedIdx = circleIdx
           rectIdx = -1
           lineIdx = -1
+          circleIdx = -1
         }
         else if(cursor.current === 'L') {
           console.log("hua")
