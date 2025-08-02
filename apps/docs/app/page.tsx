@@ -14,6 +14,9 @@ export default function Page() {
   const lineWidth = useRef<number>(1)
   const [ L, setL ] = useState<number>(1)
 
+  const lineDash = useRef<number[]>([])
+  const [ LD, setLD ] = useState<number>(1)
+
   const cursor = useRef<string>("R")
   const [cursorState, setCursorState] = useState<string>("R")
 
@@ -27,6 +30,7 @@ export default function Page() {
       if(obj.type === 'rect') {
         ctx.strokeStyle = obj.color
         ctx.lineWidth = obj.lineWidth
+        ctx.setLineDash(obj.lineDash)
         ctx.strokeRect(obj.x, obj.y, obj.width, obj.height)
       }
       else if(obj.type === 'line') {
@@ -34,6 +38,7 @@ export default function Page() {
         ctx.moveTo(obj.startX, obj.startY)
         ctx.strokeStyle = obj.color
         ctx.lineWidth = obj.lineWidth
+        ctx.setLineDash(obj.lineDash)
         ctx.lineTo(obj.endX, obj.endY)
         ctx.stroke()
       }
@@ -41,6 +46,7 @@ export default function Page() {
         ctx.beginPath()
         ctx.strokeStyle = obj.color
         ctx.lineWidth = obj.lineWidth
+        ctx.setLineDash(obj.lineDash)
         ctx.arc(obj.x, obj.y, obj.r, 0, 2*Math.PI)
         ctx.stroke()
       }
@@ -52,6 +58,7 @@ export default function Page() {
           ctx.lineTo(obj.points[i].x, obj.points[i].y)
           ctx.strokeStyle = obj.color
           ctx.lineWidth = obj.lineWidth
+          ctx.setLineDash(obj.lineDash)
           ctx.stroke()
         }
       }
@@ -242,7 +249,9 @@ export default function Page() {
 
     let animationFrameId: number;
 
-    
+    //15 10
+    //6 10
+    // []
 
     const drawLineFrame = (e: MouseEvent) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -252,7 +261,9 @@ export default function Page() {
       ctx.strokeStyle = color.current
       ctx.moveTo(lineX, lineY)
       ctx.lineTo(e.clientX, e.clientY)
+      ctx.setLineDash([15,10])
       ctx.lineWidth = lineWidth.current
+      ctx.setLineDash(lineDash.current)
       ctx.stroke()
     };
     
@@ -359,6 +370,7 @@ export default function Page() {
       DrawRect()
       ctx.strokeStyle = color.current
       ctx.lineWidth = lineWidth.current
+      ctx.setLineDash(lineDash.current)
       ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
     }
 
@@ -384,6 +396,7 @@ export default function Page() {
         ctx.lineTo(x, y)
         ctx.lineWidth = lineWidth.current
         ctx.strokeStyle = color.current
+        ctx.setLineDash(lineDash.current)
         ctx.stroke()
         pointX = x
         pointY = y
@@ -403,6 +416,7 @@ export default function Page() {
         ctx.beginPath()
         ctx.lineWidth = lineWidth.current
         ctx.strokeStyle = color.current
+        ctx.setLineDash(lineDash.current)
         ctx.arc(mx, my, r, 0, 2*Math.PI)
         ctx.stroke()
       }
@@ -521,7 +535,8 @@ export default function Page() {
             width: e.clientX - rectX,
             height: e.clientY - rectY,
             color: color.current,
-            lineWidth: lineWidth.current
+            lineWidth: lineWidth.current,
+            lineDash: lineDash.current
           })
           DrawRect()
         }
@@ -548,7 +563,8 @@ export default function Page() {
             endX: e.clientX,
             endY: e.clientY,
             color: color.current,
-            lineWidth: lineWidth.current
+            lineWidth: lineWidth.current,
+            lineDash: lineDash.current
           })
           DrawRect()
         }
@@ -565,7 +581,8 @@ export default function Page() {
             y: my,
             r,
             color: color.current,
-            lineWidth: lineWidth.current
+            lineWidth: lineWidth.current,
+            lineDash: lineDash.current
           })
           DrawRect()
         }
@@ -575,7 +592,8 @@ export default function Page() {
               type: "path",
               points: points,
               color: color.current,
-              lineWidth: lineWidth.current
+              lineWidth: lineWidth.current,
+            lineDash: lineDash.current
             })
             points = []
             dp = []
@@ -648,7 +666,7 @@ export default function Page() {
           }}></button>
 
         </div>
-        <Heading str="Line Width"/>
+        <Heading str="Stroke Width"/>
         <div className="flex justify-start items-center gap-x-1">
           <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${L === 1 ? "bg-blue-200" : ''}`} onClick={() =>  {
             lineWidth.current = 1
@@ -661,6 +679,23 @@ export default function Page() {
           <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${L === 5 ? "bg-blue-200" : ''}`} onClick={() =>  {
             lineWidth.current = 5
             setL(5)
+          }}>5</button>
+
+        </div>
+
+        <Heading str="Stroke Style"/>
+        <div className="flex justify-start items-center gap-x-1">
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${LD === 1 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineDash.current = []
+            setLD(1)
+          }}>1</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${LD === 2 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineDash.current = [15, 10]
+            setLD(2)
+          }}>2</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${LD === 5 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineDash.current = [6, 10]
+            setLD(5)
           }}>5</button>
 
         </div>
