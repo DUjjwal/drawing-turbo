@@ -607,14 +607,31 @@ export default function Page() {
     <div className="w-full">
       <canvas ref={ref}></canvas>
       <div className="flex flex-col p-0.5 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg">
-        <button className={`w-8 h-8 bg-blue-600 rounded-lg ${C === "blue" ? "border-1 border-y-black" : ''}`} onClick={() =>  {
-          color.current = 'blue'
-          setC("blue")
-        }}></button>
-        <button className={`w-8 h-8 bg-green-500 rounded-lg ${C === "green" ? "border-1 border-black" : ''}`} onClick={() =>  {
-          color.current = 'green'
-          setC("green")
-        }}></button>
+        <div className="flex justify-center items-center gap-x-1">
+          <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'black'
+            setC("black")
+          }}></button>
+          <button className={`w-7 h-7 p-1 bg-red-500 rounded-lg ${C === "red" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'red'
+            setC("red")
+          }}></button>
+          <button className={`w-7 h-7 bg-green-500 rounded-lg ${C === "green" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'green'
+            setC("green")
+          }}></button>
+          
+          <button className={`w-7 h-7 bg-blue-600 rounded-lg ${C === "blue" ? "border-1 border-y-black" : ''}`} onClick={() =>  {
+            color.current = 'blue'
+            setC("blue")
+          }}></button>
+
+          <button className={`w-7 h-7 bg-orange-600 rounded-lg ${C === "orange" ? "border-1 border-y-black" : ''}`} onClick={() =>  {
+            color.current = 'orange'
+            setC("orange")
+          }}></button>
+
+        </div>
       </div>
 
       <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg">
