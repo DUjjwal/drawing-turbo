@@ -11,6 +11,9 @@ export default function Page() {
   const color = useRef<string>("blue")
   const [ C, setC ] = useState<string>("blue")
 
+  const lineWidth = useRef<number>(1)
+  const [ L, setL ] = useState<number>(1)
+
   const cursor = useRef<string>("R")
   const [cursorState, setCursorState] = useState<string>("R")
 
@@ -23,18 +26,21 @@ export default function Page() {
     shapes.current.forEach((obj: any) => {
       if(obj.type === 'rect') {
         ctx.strokeStyle = obj.color
+        ctx.lineWidth = obj.lineWidth
         ctx.strokeRect(obj.x, obj.y, obj.width, obj.height)
       }
       else if(obj.type === 'line') {
         ctx.beginPath()
         ctx.moveTo(obj.startX, obj.startY)
         ctx.strokeStyle = obj.color
+        ctx.lineWidth = obj.lineWidth
         ctx.lineTo(obj.endX, obj.endY)
         ctx.stroke()
       }
       else if(obj.type === 'circle') {
         ctx.beginPath()
         ctx.strokeStyle = obj.color
+        ctx.lineWidth = obj.lineWidth
         ctx.arc(obj.x, obj.y, obj.r, 0, 2*Math.PI)
         ctx.stroke()
       }
@@ -45,6 +51,7 @@ export default function Page() {
           ctx.moveTo(obj.points[i-1].x, obj.points[i-1].y)
           ctx.lineTo(obj.points[i].x, obj.points[i].y)
           ctx.strokeStyle = obj.color
+          ctx.lineWidth = obj.lineWidth
           ctx.stroke()
         }
       }
@@ -245,6 +252,7 @@ export default function Page() {
       ctx.strokeStyle = color.current
       ctx.moveTo(lineX, lineY)
       ctx.lineTo(e.clientX, e.clientY)
+      ctx.lineWidth = lineWidth.current
       ctx.stroke()
     };
     
@@ -350,6 +358,7 @@ export default function Page() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       DrawRect()
       ctx.strokeStyle = color.current
+      ctx.lineWidth = lineWidth.current
       ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
     }
 
@@ -373,6 +382,7 @@ export default function Page() {
         ctx.beginPath()
         ctx.moveTo(pointX, pointY)
         ctx.lineTo(x, y)
+        ctx.lineWidth = lineWidth.current
         ctx.strokeStyle = color.current
         ctx.stroke()
         pointX = x
@@ -391,6 +401,7 @@ export default function Page() {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         DrawRect()
         ctx.beginPath()
+        ctx.lineWidth = lineWidth.current
         ctx.strokeStyle = color.current
         ctx.arc(mx, my, r, 0, 2*Math.PI)
         ctx.stroke()
@@ -509,7 +520,8 @@ export default function Page() {
             y: rectY,
             width: e.clientX - rectX,
             height: e.clientY - rectY,
-            color: color.current
+            color: color.current,
+            lineWidth: lineWidth.current
           })
           DrawRect()
         }
@@ -535,7 +547,8 @@ export default function Page() {
             startY: lineY,
             endX: e.clientX,
             endY: e.clientY,
-            color: color.current
+            color: color.current,
+            lineWidth: lineWidth.current
           })
           DrawRect()
         }
@@ -551,7 +564,8 @@ export default function Page() {
             x: mx,
             y: my,
             r,
-            color: color.current
+            color: color.current,
+            lineWidth: lineWidth.current
           })
           DrawRect()
         }
@@ -560,7 +574,8 @@ export default function Page() {
             shapes.current.push({
               type: "path",
               points: points,
-              color: color.current
+              color: color.current,
+              lineWidth: lineWidth.current
             })
             points = []
             dp = []
@@ -631,6 +646,22 @@ export default function Page() {
             color.current = 'orange'
             setC("orange")
           }}></button>
+
+        </div>
+        <Heading str="Line Width"/>
+        <div className="flex justify-start items-center gap-x-1">
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${L === 1 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineWidth.current = 1
+            setL(1)
+          }}>1</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${L === 2 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineWidth.current = 2
+            setL(2)
+          }}>2</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${L === 5 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            lineWidth.current = 5
+            setL(5)
+          }}>5</button>
 
         </div>
       </div>
