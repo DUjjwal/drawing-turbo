@@ -606,7 +606,8 @@ export default function Page() {
   return (
     <div className="w-full">
       <canvas ref={ref}></canvas>
-      <div className="flex flex-col p-0.5 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg">
+      <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg">
+        <Heading str="Stroke"/>
         <div className="flex justify-center items-center gap-x-1">
           <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
             color.current = 'black'
@@ -635,6 +636,7 @@ export default function Page() {
       </div>
 
       <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg">
+        
         <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'A' ? "bg-blue-300" : ''}`} onClick={() =>  {
           cursor.current = 'A'
           setCursorState("A")
@@ -671,5 +673,12 @@ export default function Page() {
     </div>
     
   
+  )
+}
+
+
+export function Heading({str}: any) {
+  return (
+    <p className="text-sm">{str}</p>
   )
 }
