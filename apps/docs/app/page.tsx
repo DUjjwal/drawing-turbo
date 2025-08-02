@@ -192,6 +192,19 @@ export default function Page() {
     return idx; 
   }
 
+  function onTextBox(e): number {
+    const x = e.clientX, y =e.clientY
+    let idx = -1
+    const arr = Array.from(document.querySelectorAll('#text-box'))
+    arr.forEach((obj, index) => {
+      const x1 = obj.offsetLeft, x2 = x1 + obj.offsetWidth
+      const y1 = obj.offsetTop, y2 = y1 + obj.offsetHeight
+      if(x >= x1 && x <= x2 && y >= y1 && y<= y2) {
+        idx = index
+      }
+    })
+    return idx
+  }
 
 
 
@@ -218,7 +231,11 @@ export default function Page() {
     let points = []
     let dp = []
 
+    let textIdx = -1, dxt = 0, dyt = 0
+
     let animationFrameId: number;
+
+    
 
     const drawLineFrame = (e: MouseEvent) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -232,7 +249,8 @@ export default function Page() {
     };
     
     const mouseDown = (e) => {
-      isDragging = true
+      if((textIdx = onTextBox(e)) === -1 || cursor.current === 'A')
+        isDragging = true
       rectX = e.clientX
       rectY = e.clientY
       lineX = e.clientX
@@ -276,10 +294,57 @@ export default function Page() {
                 dy: point[i].y - e.clientY
               })
             }
+          }
         }
+        if(textIdx !== -1) {
+          const arr = Array.from(document.querySelectorAll('#text-box'))
+          const text = arr[textIdx]
+          dxt = text.offsetLeft - e.clientX
+          dyt = text.offsetTop - e.clientY
+        }
+        
+      }else if(cursor.current === 'T') {
+        //if textidx is not equal to -1 then only do this
+        textIdx = onTextBox(e)
+        if(textIdx !== -1)return;
+        const text = document.createElement('textarea')
+        text.style.position = 'fixed'
+        text.style.left = `${e.clientX}px`
+        text.style.top = `${e.clientY}px`
+        text.style.border = 'none'
+        text.style.outline = 'none'
+        text.style.resize = 'both'
+        text.style.background = 'transparent'
+        text.style.color = color.current
+        text.id = 'text-box'
+        document.body.append(text)
+        setTimeout(() => {
+          text.focus()
+          text.addEventListener('blur', (e) => {
+            const txt = text.value.trim()
+            if(!txt) {
+              document.body.removeChild(text)
+            }
+            else {
+              text.style.outline = 'none'
+              text.readOnly = true
+            }
+          })
+          text.addEventListener('focus', (e) => {
+            text.style.outline = `1px solid #d2d4d6`
+          })
+
+          text.addEventListener('dblclick', (e) => {
+            text.readOnly = false
+            text.focus()
+            setCursorState('A')
+            cursor.current = 'A'
+          })
+          setCursorState('A')
+          cursor.current = 'A'
+        }, 5)
       }
     }
-  }
 
     const drawRectFrame = (e) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -289,7 +354,12 @@ export default function Page() {
     }
 
     const mouseMove = (e) => {
-      
+      if(document.activeElement?.tagName.toLowerCase() === 'textarea') {
+        const arr = Array.from(document.querySelectorAll('#text-box'))
+        arr.forEach((obj) => {
+          obj.style.cursor = 'text'
+        })
+      }
       if(isDragging && cursor.current === 'R') {        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => drawRectFrame(e));
@@ -330,7 +400,12 @@ export default function Page() {
         DrawRect()
         
         if(isDragging) {
+          const arr = Array.from(document.querySelectorAll('#text-box'))
+          arr.forEach((obj, index) => {
+            obj.style.cursor = 'all-scroll'
+          })
           if(rectIdx !== -1) {
+            if(textIdx !== -1)return;
             const rect = shapes.current[rectIdx]
             if(rect) {
               rect.x = dx + e.clientX
@@ -339,6 +414,7 @@ export default function Page() {
             }
           }
           else if(lineIdx !== -1) {
+            if(textIdx !== -1)return;
             const line = shapes.current[lineIdx]
             if(line) {
               line.startX = dx1 + e.clientX
@@ -350,6 +426,7 @@ export default function Page() {
             }
           }
           else if(circleIdx !== -1) {
+            if(textIdx !== -1)return;
             const circle = shapes.current[circleIdx]
             if(circle) {
               circle.x = dxc + e.clientX
@@ -359,6 +436,7 @@ export default function Page() {
             }
           }
           else if(pointIdx !== -1) {
+            if(textIdx !== -1)return;
             const point = shapes.current[pointIdx].points
             if(point) {
               for(let i = 0; i < point.length; i++) {
@@ -368,14 +446,39 @@ export default function Page() {
             }
             DrawRect()
           }
+          else if(textIdx !== -1) {
+            const arr = Array.from(document.querySelectorAll('#text-box'))
+            const text = arr[textIdx]
+            document.body.removeChild(text)
+            let xt = dxt + e.clientX, yt = dyt + e.clientY
+
+            text.style.left = `${xt}px`
+            text.style.top = `${yt}px`
+            document.body.appendChild(text)
+          }
         }
         else {
-          
-          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1 || (circleIdx = onCircle(e)) !== -1 || (pointIdx = OnPath(e)) !== -1) {
-            document.body.style.cursor = "all-scroll"
+          const isFocused = document.activeElement?.tagName.toLowerCase() === 'textarea'
+          textIdx = onTextBox(e)
+          const isTextFocused = document.activeElement?.tagName.toLowerCase() === 'textarea'
+
+          if (
+            (rectIdx = onRectangle(e)) !== -1 ||
+            (lineIdx = onLine(e)) !== -1 ||
+            (circleIdx = onCircle(e)) !== -1 ||
+            (pointIdx = OnPath(e)) !== -1 ||
+            (textIdx !== -1)
+          ) {
+            const arr = Array.from(document.querySelectorAll('#text-box'))
+            arr.forEach((obj, index) => {
+              if (index === textIdx) {
+                obj.style.cursor = isTextFocused ? 'text' : 'all-scroll'
+              }
+            })
+            document.body.style.cursor = isTextFocused ? 'default' : 'all-scroll'
+          } else {
+            document.body.style.cursor = 'default'
           }
-          else 
-            document.body.style.cursor = "default"
           
 
           // console.log(lineIdx, rectIdx)
@@ -386,7 +489,14 @@ export default function Page() {
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => drawLineFrame(e));
       
-      }        
+      }     
+      
+      if(document.activeElement?.tagName.toLowerCase() === 'textarea') {
+        const arr = Array.from(document.querySelectorAll('#text-box'))
+        arr.forEach((obj) => {
+          obj.style.cursor = 'text'
+        })
+      }   
     }
 
     const mouseUp = (e) => {
@@ -465,10 +575,10 @@ export default function Page() {
 
 
 
-    canvas.addEventListener("mousedown", mouseDown)
-    canvas.addEventListener("mousemove", mouseMove)
-    canvas.addEventListener("mouseup", mouseUp)
-    window.addEventListener("keydown", (e) => {
+    document.addEventListener("mousedown", mouseDown)
+    document.addEventListener("mousemove", mouseMove)
+    document.addEventListener("mouseup", mouseUp)
+    document.addEventListener("keydown", (e) => {
       if(e.key === 'Delete' && cursor.current === 'A') {
         if(selectedIdx !== -1) {
           const updated = shapes.current.filter((obj, index) => index !== selectedIdx)
@@ -481,9 +591,9 @@ export default function Page() {
     })
 
     return () => {
-      canvas.removeEventListener("mousedown", mouseDown)
-      canvas.removeEventListener("mouseup", mouseUp)
-      canvas.removeEventListener("mousemove", mouseMove)
+      document.removeEventListener("mousedown", mouseDown)
+      document.removeEventListener("mouseup", mouseUp)
+      document.removeEventListener("mousemove", mouseMove)
       cancelAnimationFrame(animationFrameId); 
     }
 
@@ -532,6 +642,13 @@ export default function Page() {
           cursor.current = 'P'
           setCursorState("P")
         }}>P</button>
+
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'T' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'T'
+          setCursorState("T")
+        }}>T</button>
+
+        
       
       </div>
     </div>
