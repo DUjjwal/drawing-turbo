@@ -620,6 +620,12 @@ export default function Page() {
           DrawRect()
           selectedIdx = -1
         }
+        else if(textIdx !== -1) {
+          const arr = Array.from(document.querySelectorAll('#text-box'))
+          const text = arr[textIdx]
+          document.body.removeChild(text)
+          textIdx = -1
+        }
       }
     })
 
