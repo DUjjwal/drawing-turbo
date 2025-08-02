@@ -14,6 +14,10 @@ export default function Page() {
   const cursor = useRef<string>("R")
   const [cursorState, setCursorState] = useState<string>("R")
 
+
+
+
+
   function DrawRect() {
     
     const canvas = ref.current
@@ -50,6 +54,21 @@ export default function Page() {
       }
     })
 
+  }
+
+
+  function onTextBox(e): number {
+    const x = e.clientX, y = e.clientY
+    let idx = -1
+    const arr = Array.from(document.querySelectorAll('#text-box'))
+    arr.forEach((obj, index) => {
+      const x1 = obj.offsetLeft, x2 = x1 + obj.offsetWidth
+      const y1 = obj.offsetTop, y2 = y1 + obj.offsetHeight
+      if(x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+        idx = index
+      }
+    })
+    return idx
   }
 
 
@@ -192,7 +211,7 @@ export default function Page() {
     return idx; 
   }
 
-
+  
 
 
   useEffect(() => {
@@ -217,6 +236,8 @@ export default function Page() {
     let pointX = 0, pointY = 0, pointIdx = -1
     let points = []
     let dp = []
+
+    let textIdx = -1
 
     let animationFrameId: number;
 
@@ -288,9 +309,28 @@ export default function Page() {
       text.style.outline = 'none'
       text.style.color = color.current
       text.id = 'text-box'
-      text.addEventListener('focus', () => {
-        setCursorState('A')
-        cursor.current = 'A'
+      cursor.current = 'A'
+      setCursorState('A')
+      text.addEventListener('mousemove', (e) => {
+        textIdx = onTextBox(e)
+        const arr = Array.from(document.querySelectorAll('#text-box'))
+          arr.forEach((obj) => {
+            //@ts-ignore
+            obj.style.cursor = 'default'
+          })
+          console.log(textIdx)
+          if (textIdx !== -1) {
+            arr.forEach((obj, index) => {
+                if(index === textIdx) {Y
+                  //@ts-ignore
+                  obj.style.cursor = 'all-scroll'
+                }
+            })
+            document.body.style.cursor = "all-scroll";
+          } else {
+            document.body.style.cursor = "default";                        
+              
+          }
       })
       body?.appendChild(text) 
       setTimeout(() =>  {
@@ -307,6 +347,8 @@ export default function Page() {
             text.style.background = 'transparent'
             text.style.resize = 'none'
           }
+          
+          
         })
         
       }, 5);
@@ -403,12 +445,37 @@ export default function Page() {
           }
         }
         else {
-          
-          if((rectIdx = onRectangle(e)) !== -1 || (lineIdx = onLine(e)) !== -1 || (circleIdx = onCircle(e)) !== -1 || (pointIdx = OnPath(e)) !== -1) {
-            document.body.style.cursor = "all-scroll"
+          let lastIdx = -1
+          textIdx = onTextBox(e)
+          rectIdx = onRectangle(e)
+          lineIdx = onLine(e)
+          circleIdx = onCircle(e)
+          pointIdx = OnPath(e)   
+          const arr = Array.from(document.querySelectorAll('#text-box'))
+          arr.forEach((obj) => {
+            //@ts-ignore
+            obj.style.cursor = 'default'
+          })
+          console.log(textIdx)
+          if (
+            rectIdx !== -1 ||
+            lineIdx !== -1 ||
+            circleIdx !== -1 ||
+            pointIdx !== -1 ||
+            textIdx !== -1
+          ) {
+            arr.forEach((obj, index) => {
+              if(index === textIdx) {
+                //@ts-ignore
+                obj.style.cursor = 'default'
+
+              }
+          })
+            document.body.style.cursor = "all-scroll";
+          } else {
+            document.body.style.cursor = "default";                        
+              
           }
-          else 
-            document.body.style.cursor = "default"
           
 
           // console.log(lineIdx, rectIdx)
@@ -521,6 +588,8 @@ export default function Page() {
     }
 
   }, [])
+
+  
   
   
 
