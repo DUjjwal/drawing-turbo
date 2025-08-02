@@ -279,6 +279,39 @@ export default function Page() {
         }
       }
     }
+    else if(cursor.current === 'T') {
+      const body = document.querySelector('body')
+      const text = document.createElement('textarea')
+      text.style.position = 'fixed'
+      text.style.top = `${e.clientY}px`
+      text.style.left = `${e.clientX}px`
+      text.style.outline = 'none'
+      text.style.color = color.current
+      text.id = 'text-box'
+      text.addEventListener('focus', () => {
+        setCursorState('A')
+        cursor.current = 'A'
+      })
+      body?.appendChild(text) 
+      setTimeout(() =>  {
+        text.focus()
+        
+        text.addEventListener('blur', () => {
+          const txt = text.value.trim()
+          if(!txt) {
+            body?.removeChild(text)
+          }
+          else {
+            text.readOnly = true
+            text.style.border = 'none'
+            text.style.background = 'transparent'
+            text.style.resize = 'none'
+          }
+        })
+        
+      }, 5);
+      
+    }
   }
 
     const drawRectFrame = (e) => {
@@ -532,6 +565,17 @@ export default function Page() {
           cursor.current = 'P'
           setCursorState("P")
         }}>P</button>
+
+
+        <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'T' ? "bg-blue-300" : ''}`} onClick={() =>  {
+          cursor.current = 'T'
+          setCursorState("T")
+          const arr = Array.from(document.querySelectorAll('#text-box'))
+          arr.forEach((obj) => {
+            console.log(obj)
+            obj.readOnly = false
+          })
+        }}>T</button>
       
       </div>
     </div>
