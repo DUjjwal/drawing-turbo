@@ -1,12 +1,60 @@
 "use client"
-import { useEffect, useRef, useState } from "react";
+import {  useEffect, useRef, useState } from "react";
+
+
+type Point = {
+  x: number,
+  y: number
+}
+
+type Rectangle = {
+  type: 'rect',
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  lineWidth: number,
+  lineDash: number[],
+  color: string
+}
+
+type Line = {
+  type: 'line',
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  lineWidth: number,
+  lineDash: number[],
+  color: string
+}
+
+type Circle = {
+  type: 'circle',
+  x: number,
+  y: number,
+  r: number,
+  lineWidth: number,
+  lineDash: number[],
+  color: string
+}
+
+type Path = {
+  type: 'path',
+  points: Point[],
+  lineWidth: number,
+  lineDash: number[],
+  color: string
+}
+
+type Shape = Rectangle | Line | Path | Circle
 
 
 export default function Page() {
 
   const ref = useRef<HTMLCanvasElement>(null)
   
-  const shapes = useRef<any[]>([])
+  const shapes = useRef<Shape[]>([])
 
   const color = useRef<string>("blue")
   const [ C, setC ] = useState<string>("blue")
@@ -32,7 +80,7 @@ export default function Page() {
     const ctx = canvas?.getContext("2d")
     if(!ctx || !canvas)return;
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    shapes.current.forEach((obj: any) => {
+    shapes.current.forEach((obj: Shape) => {
       if(obj.type === 'rect') {
         ctx.strokeStyle = obj.color
         ctx.lineWidth = obj.lineWidth
@@ -57,11 +105,12 @@ export default function Page() {
         ctx.stroke()
       }
       else if(obj.type === 'path') {
-        
         for(let i = 1; i<obj.points.length; i++) {
+          const p1 = obj.points[i-1], p2 = obj.points[i]
+          if(!p1 || !p2)return;
           ctx.beginPath()
-          ctx.moveTo(obj.points[i-1].x, obj.points[i-1].y)
-          ctx.lineTo(obj.points[i].x, obj.points[i].y)
+          ctx.moveTo(p1.x, p1.y)
+          ctx.lineTo(p2.x, p2.y)
           ctx.strokeStyle = obj.color
           ctx.lineWidth = obj.lineWidth
           ctx.setLineDash(obj.lineDash)
@@ -73,7 +122,7 @@ export default function Page() {
   }
 
 
-  function OnPath(e): number {
+  function OnPath(e: globalThis.MouseEvent): number {
     let idx = -1
     const rect = ref.current?.getBoundingClientRect()
     const px = e.clientX - (rect?.left ?? 0)
@@ -83,10 +132,12 @@ export default function Page() {
       if (obj.type === 'path') {
         const pts = obj.points
         for (let i = 1; i < pts.length; i++) {
-          const x1 = pts[i - 1].x
-          const y1 = pts[i - 1].y
-          const x2 = pts[i].x
-          const y2 = pts[i].y
+          const p1 = pts[i-1], p2 = pts[i]
+          if(!p1 || !p2)return;
+          const x1 = p1.x
+          const y1 = p1.y
+          const x2 = p2.x
+          const y2 = p2.y
 
           if (isPointNearLine(x1, y1, x2, y2, px + (rect?.left ?? 0), py + (rect?.top ?? 0))) {
             idx = index
@@ -141,10 +192,11 @@ export default function Page() {
   }
 
 
-  function onLine(e): number {
+  function onLine(e: globalThis.MouseEvent): number {
     const x = e.clientX, y = e.clientY
     let idx = -1
     shapes.current.forEach((obj, index) => {
+      if(obj.type !== 'line')return;
       if(isPointNearLine(obj.startX, obj.startY, obj.endX, obj.endY, x, y)) {
         idx = index
       }
@@ -152,9 +204,8 @@ export default function Page() {
     return idx
   }
 
-  function onCircle(e: any): number {
+  function onCircle(e: globalThis.MouseEvent): number {
     let idx = -1
-    let flag = false
 
     const rect = ref.current?.getBoundingClientRect()
 
@@ -164,10 +215,10 @@ export default function Page() {
 
     shapes.current.forEach((obj, index) => {
       if(obj.type === 'circle') {
-        let dx = obj.x - x
-        let dy = obj.y - y
+        const dx = obj.x - x
+        const dy = obj.y - y
   
-        let d = Math.sqrt(dx*dx + dy*dy)
+        const d = Math.sqrt(dx*dx + dy*dy)
         
         if((d >= obj.r - 5) && (d <= obj.r + 5)) {
           idx = index
@@ -180,7 +231,7 @@ export default function Page() {
 
 
 
-  function onRectangle(e: MouseEvent): number {
+  function onRectangle(e: globalThis.MouseEvent): number {
     const tolerance = 3;
 
     const rect = ref.current?.getBoundingClientRect()
@@ -212,10 +263,10 @@ export default function Page() {
     return idx; 
   }
 
-  function onTextBox(e): number {
+  function onTextBox(e: globalThis.MouseEvent): number {
     const x = e.clientX, y =e.clientY
     let idx = -1
-    const arr = Array.from(document.querySelectorAll('#text-box'))
+    const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
     arr.forEach((obj, index) => {
       const x1 = obj.offsetLeft, x2 = x1 + obj.offsetWidth
       const y1 = obj.offsetTop, y2 = y1 + obj.offsetHeight
@@ -226,14 +277,16 @@ export default function Page() {
     return idx
   }
 
-  function onOptionsPane(e): boolean {
-    let div = document.getElementById('options')
+  function onOptionsPane(e: globalThis.MouseEvent): boolean {
+    let div: HTMLElement | null = document.getElementById('options')
+    if(!div)return false;
     let x1 = div?.offsetLeft, x2 = x1 + div?.offsetWidth
     let y1 = div?.offsetTop, y2 = y1 + div?.offsetTop
     let x = e.clientX, y = e.clientY
-    let ans = x >= x1 - 5 && x <= x2 + 5 && y >= y1 - 5 && y <= y2 + 5;
+    const ans = x >= x1 - 5 && x <= x2 + 5 && y >= y1 - 5 && y <= y2 + 5;
 
     div = document.getElementById('options2')
+    if(!div)return ans;
     x1 = div?.offsetLeft 
     x2 = x1 + div?.offsetWidth;
     y1 = div?.offsetTop 
@@ -263,8 +316,11 @@ export default function Page() {
     let dxc = 0 , dyc = 0
 
     let pointX = 0, pointY = 0, pointIdx = -1
-    let points = []
-    let dp = []
+    let points: Point[] = []
+    let dp: {
+      dx: number,
+      dy: number
+    }[] = []
 
 
     let textIdx = -1, dxt = 0, dyt = 0
@@ -272,7 +328,7 @@ export default function Page() {
     let animationFrameId: number;
 
     
-    const drawLineFrame = (e: MouseEvent) => {
+    const drawLineFrame = (e: globalThis.MouseEvent) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       DrawRect()
 
@@ -286,7 +342,7 @@ export default function Page() {
       ctx.stroke()
     };
     
-    const mouseDown = (e) => {
+    const mouseDown = (e: globalThis.MouseEvent) => {
       if(onOptionsPane(e))return;
       if((textIdx = onTextBox(e)) === -1 || cursor.current === 'A')
         isDragging = true
@@ -301,14 +357,14 @@ export default function Page() {
       if(cursor.current === 'A') {
         if(rectIdx !== -1) {
           const rect = shapes.current[rectIdx]
-          if(rect) {
+          if(rect && rect.type === 'rect') {
             dx = rect.x - e.clientX
             dy = rect.y - e.clientY
           }
         } 
         if(lineIdx !== -1) {
           const line = shapes.current[lineIdx]
-          if(line) {
+          if(line && line.type === 'line') {
             dx1 = line.startX - e.clientX
             dy1 = line.startY - e.clientY
 
@@ -318,29 +374,37 @@ export default function Page() {
         }
         if(circleIdx !== -1) {
           const circle = shapes.current[circleIdx]
-          if(circle) {
+          if(circle && circle.type === 'circle') {
             dxc = circle.x - e.clientX
             dyc = circle.y - e.clientY
           }
         }
         if(pointIdx !== -1) {
-          const point = shapes.current[pointIdx].points
-          if(point) {
+          const pt = shapes.current[pointIdx]
+
+          if(pt && pt.type === 'path') {
+            const point = pt.points ?? []
             dp = []
             for(let i = 0; i < point.length; i++) {
-              dp.push({
-                dx: point[i].x - e.clientX,
-                dy: point[i].y - e.clientY
-              })
+              const p = point[i]
+              if(p) {
+                dp.push({
+                  dx: p.x - e.clientX,
+                  dy: p.y - e.clientY
+                })
+              }
             }
           }
         }
+      
         if(textIdx !== -1) {
-          const arr = Array.from(document.querySelectorAll('#text-box'))
-          const text = arr[textIdx]
+          const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
+          const text: HTMLElement | undefined = arr[textIdx]
+          if(!text)return;
           dxt = text.offsetLeft - e.clientX
           dyt = text.offsetTop - e.clientY
         }
+      
         
       }else if(cursor.current === 'T') {
         //if textidx is not equal to -1 then only do this
@@ -361,7 +425,7 @@ export default function Page() {
         document.body.append(text)
         setTimeout(() => {
           text.focus()
-          text.addEventListener('blur', (e) => {
+          text.addEventListener('blur', () => {
             const txt = text.value.trim()
             if(!txt) {
               document.body.removeChild(text)
@@ -371,11 +435,11 @@ export default function Page() {
               text.readOnly = true
             }
           })
-          text.addEventListener('focus', (e) => {
+          text.addEventListener('focus', () => {
             text.style.outline = `1px solid #d2d4d6`
           })
 
-          text.addEventListener('dblclick', (e) => {
+          text.addEventListener('dblclick', () => {
             text.readOnly = false
             text.focus()
             setCursorState('A')
@@ -387,7 +451,7 @@ export default function Page() {
       }
     }
 
-    const drawRectFrame = (e) => {
+    const drawRectFrame = (e: globalThis.MouseEvent) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       DrawRect()
       ctx.strokeStyle = color.current
@@ -396,10 +460,10 @@ export default function Page() {
       ctx.strokeRect(rectX, rectY, e.clientX - rectX, e.clientY - rectY)
     }
 
-    const mouseMove = (e) => {
+    const mouseMove = (e: globalThis.MouseEvent) => {
       
       if(document.activeElement?.tagName.toLowerCase() === 'textarea') {
-        const arr = Array.from(document.querySelectorAll('#text-box'))
+        const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
         arr.forEach((obj) => {
           obj.style.cursor = 'text'
         })
@@ -413,7 +477,7 @@ export default function Page() {
           x: pointX,
           y: pointY
         })
-        let x = e.clientX, y = e.clientY
+        const x = e.clientX, y = e.clientY
         ctx.beginPath()
         ctx.moveTo(pointX, pointY)
         ctx.lineTo(x, y)
@@ -425,14 +489,14 @@ export default function Page() {
         pointY = y
       }
       if(isDragging && cursor.current === 'C') {
-        let mx = ( e.clientX + circleX ) / 2
-        let my = ( e.clientY + circleY ) / 2
+        const mx = ( e.clientX + circleX ) / 2
+        const my = ( e.clientY + circleY ) / 2
 
         // console.log(circleX+" "+circleY)
         // console.log(mx+" "+my)
 
-        let dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
-        let r = Math.sqrt(dist)
+        const dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
+        const r = Math.sqrt(dist)
     
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         DrawRect()
@@ -448,14 +512,14 @@ export default function Page() {
         DrawRect()
         
         if(isDragging) {
-          const arr = Array.from(document.querySelectorAll('#text-box'))
-          arr.forEach((obj, index) => {
+          const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
+          arr.forEach((obj) => {
             obj.style.cursor = 'all-scroll'
           })
           if(rectIdx !== -1) {
             if(textIdx !== -1)return;
             const rect = shapes.current[rectIdx]
-            if(rect) {
+            if(rect && rect.type === 'rect') {
               rect.x = dx + e.clientX
               rect.y = dy + e.clientY
               DrawRect()
@@ -464,7 +528,7 @@ export default function Page() {
           else if(lineIdx !== -1) {
             if(textIdx !== -1)return;
             const line = shapes.current[lineIdx]
-            if(line) {
+            if(line && line.type === 'line') {
               line.startX = dx1 + e.clientX
               line.startY = dy1 + e.clientY
 
@@ -476,7 +540,7 @@ export default function Page() {
           else if(circleIdx !== -1) {
             if(textIdx !== -1)return;
             const circle = shapes.current[circleIdx]
-            if(circle) {
+            if(circle && circle.type === 'circle') {
               circle.x = dxc + e.clientX
               circle.y = dyc + e.clientY
 
@@ -485,20 +549,26 @@ export default function Page() {
           }
           else if(pointIdx !== -1) {
             if(textIdx !== -1)return;
-            const point = shapes.current[pointIdx].points
-            if(point) {
+            const pt = shapes.current[pointIdx]
+            if(pt && pt.type === 'path') {
+              const point = pt.points
               for(let i = 0; i < point.length; i++) {
-                point[i].x = dp[i].dx + e.clientX
-                point[i].y = dp[i].dy + e.clientY
+                const p = point[i], q = dp[i]
+                if(p && q) {
+                  p.x = q.dx + e.clientX
+                  p.y = q.dy + e.clientY
+
+                }
               }
             }
             DrawRect()
           }
           else if(textIdx !== -1) {
-            const arr = Array.from(document.querySelectorAll('#text-box'))
+            const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
             const text = arr[textIdx]
+            if(!text)return
             document.body.removeChild(text)
-            let xt = dxt + e.clientX, yt = dyt + e.clientY
+            const xt = dxt + e.clientX, yt = dyt + e.clientY
 
             text.style.left = `${xt}px`
             text.style.top = `${yt}px`
@@ -506,7 +576,6 @@ export default function Page() {
           }
         }
         else {
-          const isFocused = document.activeElement?.tagName.toLowerCase() === 'textarea'
           textIdx = onTextBox(e)
           const isTextFocused = document.activeElement?.tagName.toLowerCase() === 'textarea'
 
@@ -517,7 +586,7 @@ export default function Page() {
             (pointIdx = OnPath(e)) !== -1 ||
             (textIdx !== -1)
           ) {
-            const arr = Array.from(document.querySelectorAll('#text-box'))
+            const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
             arr.forEach((obj, index) => {
               if (index === textIdx) {
                 obj.style.cursor = isTextFocused && cursor.current !== 'A' ? 'text' : 'all-scroll'
@@ -540,14 +609,14 @@ export default function Page() {
       }     
       
       if(document.activeElement?.tagName.toLowerCase() === 'textarea') {
-        const arr = Array.from(document.querySelectorAll('#text-box'))
+        const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
         arr.forEach((obj) => {
           obj.style.cursor = 'text'
         })
       }   
     }
 
-    const mouseUp = (e) => {
+    const mouseUp = (e: globalThis.MouseEvent) => {
       if(isDragging) {
 
         if(cursor.current === 'R') {
@@ -592,12 +661,12 @@ export default function Page() {
           DrawRect()
         }
         else if(cursor.current === 'C') {
-          let mx = ( e.clientX + circleX ) / 2
-          let my = ( e.clientY + circleY ) / 2
+          const mx = ( e.clientX + circleX ) / 2
+          const my = ( e.clientY + circleY ) / 2
 
 
-          let dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
-          let r = Math.sqrt(dist)
+          const dist = (mx-circleX)*(mx-circleX) + (my-circleY)*(my-circleY)
+          const r = Math.sqrt(dist)
           shapes.current.push({
             type: "circle",
             x: mx,
@@ -644,8 +713,9 @@ export default function Page() {
           selectedIdx = -1
         }
         else if(textIdx !== -1) {
-          const arr = Array.from(document.querySelectorAll('#text-box'))
+          const arr: HTMLElement[] = Array.from(document.querySelectorAll('#text-box'))
           const text = arr[textIdx]
+          if(!text)return;
           document.body.removeChild(text)
           textIdx = -1
         }
@@ -839,7 +909,7 @@ export default function Page() {
 }
 
 
-export function Heading({str}: any) {
+export function Heading({str}: {str: string}) {
   return (
     <p className="text-sm">{str}</p>
   )
