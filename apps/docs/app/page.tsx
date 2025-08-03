@@ -20,6 +20,12 @@ export default function Page() {
   const cursor = useRef<string>("R")
   const [cursorState, setCursorState] = useState<string>("R")
 
+  const fontSize = useRef<number>(20)
+  const [ F, setF ] = useState<number>(1)
+
+  const textAlign = useRef<string>('left')
+  const [ T, setT ] = useState<number>(1)
+
   function DrawRect() {
     
     const canvas = ref.current
@@ -220,7 +226,22 @@ export default function Page() {
     return idx
   }
 
+  function onOptionsPane(e): boolean {
+    let div = document.getElementById('options')
+    let x1 = div?.offsetLeft, x2 = x1 + div?.offsetWidth
+    let y1 = div?.offsetTop, y2 = y1 + div?.offsetTop
+    let x = e.clientX, y = e.clientY
+    let ans = x >= x1 - 5 && x <= x2 + 5 && y >= y1 - 5 && y <= y2 + 5;
 
+    div = document.getElementById('options2')
+    x1 = div?.offsetLeft 
+    x2 = x1 + div?.offsetWidth;
+    y1 = div?.offsetTop 
+    y2 = y1 + div?.offsetTop;
+    x = e.clientX 
+    y = e.clientY;
+    return (ans || (x >= x1 - 15 && x <= x2 + 15 && y >= y1 - 15 && y <= y2 + 15))
+  }
 
   useEffect(() => {
     const canvas = ref.current
@@ -245,14 +266,12 @@ export default function Page() {
     let points = []
     let dp = []
 
+
     let textIdx = -1, dxt = 0, dyt = 0
 
     let animationFrameId: number;
 
-    //15 10
-    //6 10
-    // []
-
+    
     const drawLineFrame = (e: MouseEvent) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       DrawRect()
@@ -268,6 +287,7 @@ export default function Page() {
     };
     
     const mouseDown = (e) => {
+      if(onOptionsPane(e))return;
       if((textIdx = onTextBox(e)) === -1 || cursor.current === 'A')
         isDragging = true
       rectX = e.clientX
@@ -334,8 +354,10 @@ export default function Page() {
         text.style.outline = 'none'
         text.style.resize = 'both'
         text.style.background = 'transparent'
+        text.style.fontSize = `${fontSize.current}px`
         text.style.color = color.current
         text.id = 'text-box'
+        text.style.textAlign = textAlign.current
         document.body.append(text)
         setTimeout(() => {
           text.focus()
@@ -375,6 +397,7 @@ export default function Page() {
     }
 
     const mouseMove = (e) => {
+      
       if(document.activeElement?.tagName.toLowerCase() === 'textarea') {
         const arr = Array.from(document.querySelectorAll('#text-box'))
         arr.forEach((obj) => {
@@ -497,7 +520,7 @@ export default function Page() {
             const arr = Array.from(document.querySelectorAll('#text-box'))
             arr.forEach((obj, index) => {
               if (index === textIdx) {
-                obj.style.cursor = isTextFocused ? 'text' : 'all-scroll'
+                obj.style.cursor = isTextFocused && cursor.current !== 'A' ? 'text' : 'all-scroll'
               }
             })
             document.body.style.cursor = isTextFocused ? 'default' : 'all-scroll'
@@ -645,9 +668,9 @@ export default function Page() {
   return (
     <div className="w-full">
       <canvas ref={ref}></canvas>
-      <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg">
+      {(cursor.current !== 'A' && cursor.current !== 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
         <Heading str="Stroke"/>
-        <div className="flex justify-center items-center gap-x-1">
+        <div className="flex justify-center items-center gap-x-1 bg-white">
           <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
             color.current = 'black'
             setC("black")
@@ -705,9 +728,76 @@ export default function Page() {
           }}>5</button>
 
         </div>
-      </div>
+      </div>: ''}
+      {(cursor.current === 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
+        <Heading str="Stroke"/>
+        <div className="flex justify-center items-center gap-x-1 bg-white">
+          <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'black'
+            setC("black")
+          }}></button>
+          <button className={`w-7 h-7 p-1 bg-red-500 rounded-lg ${C === "red" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'red'
+            setC("red")
+          }}></button>
+          <button className={`w-7 h-7 bg-green-500 rounded-lg ${C === "green" ? "border-1 border-black" : ''}`} onClick={() =>  {
+            color.current = 'green'
+            setC("green")
+          }}></button>
+          
+          <button className={`w-7 h-7 bg-blue-600 rounded-lg ${C === "blue" ? "border-1 border-y-black" : ''}`} onClick={() =>  {
+            color.current = 'blue'
+            setC("blue")
+          }}></button>
 
-      <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg">
+          <button className={`w-7 h-7 bg-orange-600 rounded-lg ${C === "orange" ? "border-1 border-y-black" : ''}`} onClick={() =>  {
+            color.current = 'orange'
+            setC("orange")
+          }}></button>
+
+        </div>
+        <Heading str="Font Size"/>
+        <div className="flex justify-start items-center gap-x-1">
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${F === 1 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            fontSize.current = 20
+            setF(1)
+          }}>S</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${F === 2 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            fontSize.current = 30
+            setF(2)
+          }}>M</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${F === 3 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            fontSize.current = 40
+            setF(3)
+          }}>L</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${F === 4 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            fontSize.current = 50
+            setF(4)
+          }}>XL</button>
+
+        </div>
+
+        <Heading str="Text Align"/>
+        <div className="flex justify-start items-center gap-x-1">
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${T === 1 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            textAlign.current = 'left'
+            setT(1)
+          }}>L</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${T === 2 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            textAlign.current = 'center'
+            setT(2)
+          }}>C</button>
+          <button className={`w-7 h-7 p-1 rounded-lg border-1 flex justify-center items-center ${T === 3 ? "bg-blue-200" : ''}`} onClick={() =>  {
+            textAlign.current = 'right'
+            setT(3)
+          }}>R</button>
+
+        </div>
+      </div>: ''}
+
+      
+
+      <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg bg-white" id='options2'>
         
         <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'A' ? "bg-blue-300" : ''}`} onClick={() =>  {
           cursor.current = 'A'
