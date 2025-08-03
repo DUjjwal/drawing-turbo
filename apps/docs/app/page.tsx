@@ -668,7 +668,7 @@ export default function Page() {
   return (
     <div className="w-full">
       <canvas ref={ref}></canvas>
-      {(cursor.current !== 'A' && cursor.current !== 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
+      {(cursor.current !== 'A' && cursor.current !== 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed left-0 top-1/2 transform -translate-y-1/2 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
         <Heading str="Stroke"/>
         <div className="flex justify-center items-center gap-x-1 bg-white">
           <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
@@ -729,7 +729,7 @@ export default function Page() {
 
         </div>
       </div>: ''}
-      {(cursor.current === 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed top-[40%] left-1 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
+      {(cursor.current === 'T') ? <div className="flex flex-col p-1 gap-y-0.5 fixed left-0 top-1/2 transform -translate-y-1/2 border-1 border-gray-400 rounded-lg bg-white Z-50" id='options'>
         <Heading str="Stroke"/>
         <div className="flex justify-center items-center gap-x-1 bg-white">
           <button className={`w-7 h-7 p-1 bg-black rounded-lg ${C === "black" ? "border-1 border-black" : ''}`} onClick={() =>  {
@@ -797,7 +797,7 @@ export default function Page() {
 
       
 
-      <div className="flex p-0.5 gap-x-0.5 fixed top-1 left-[45%] border-1 border-gray-400 rounded-lg bg-white" id='options2'>
+      <div className="flex p-0.5 gap-x-0.5 fixed top-5 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-1 border-gray-400 rounded-lg bg-white self-center" id='options2'>
         
         <button className={`w-8 h-8 rounded-lg border-1 border-y-black ${cursorState === 'A' ? "bg-blue-300" : ''}`} onClick={() =>  {
           cursor.current = 'A'
